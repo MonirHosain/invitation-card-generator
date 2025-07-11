@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Elegant Invitation Generator</title>
+		<style>
+			body {
+				font-family: 'Georgia', serif;
+				margin: 0;
+				padding: 20px;
+				background-color: #f9f5f0;
+				color: #333;
+			}
+
+			@media print {
+				body {
+					background-color: white;
+					padding: 0;
+				}
+				.no-print {
+					display: none;
+				}
+				.a4-page {
+					box-shadow: none;
+					margin: 0;
+					padding: 10mm;
+				}
+			}
+
+			.a4-page {
+				width: 210mm;
+				min-height: 297mm;
+				margin: 0 auto 20px;
+				padding: 15mm;
+				background: white;
+				box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+				box-sizing: border-box;
+				page-break-after: always;
+				position: relative;
+			}
+
+			.invitation {
+				width: 180mm;
+				height: 85mm;
+				margin-bottom: 10mm;
+				padding: 15mm;
+				box-sizing: border-box;
+				position: relative;
+				border: 1px solid #e0d6c2;
+				background: #fffdfa;
+			}
+
+			.invitation:nth-child(3n) {
+				margin-bottom: 0;
+			}
+
+			.controls {
+				background: white;
+				padding: 20px;
+				margin-bottom: 20px;
+				box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+				max-width: 210mm;
+				margin-left: auto;
+				margin-right: auto;
+			}
+
+			button {
+				padding: 10px 15px;
+				background: #8c7b6b;
+				color: white;
+				border: none;
+				cursor: pointer;
+				margin-right: 10px;
+				font-family: 'Georgia', serif;
+			}
+
+			button:hover {
+				background: #6b5d4f;
+			}
+
+			.ornament {
+				color: #8c7b6b;
+				letter-spacing: 5px;
+				text-align: center;
+				margin: 10px 0;
+			}
+
+			#pdf-container {
+				position: absolute;
+				left: -9999px;
+				top: 0;
+			}
+		</style>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+	</head>
+	<body>
+		<div class="controls no-print">
+			<h1 style="margin-top: 0; color: #8c7b6b">Elegant Invitation Generator</h1>
+			<p>Three invitations per A4 page - ready for printing</p>
+			<button onclick="window.print()">Print Invitations</button>
+			<button onclick="regenerate()">Regenerate</button>
+			<button onclick="downloadPDF()">Download PDF</button>
+			<p><small>Edit the HTML template and JavaScript data to customize</small></p>
+		</div>
+
+		<div id="output" class="a4-page">
+			<!-- Invitations will be inserted here by JavaScript -->
+		</div>
+
+		<div id="pdf-container"></div>
+
+		<template id="invitationTemplate">
+			<div class="invitation">
+				<h2 style="text-align: center; margin-bottom: 5px; color: #8c7b6b; font-weight: normal; font-size: 1.4em">INVITATION CARD</h2>
+				<div class="ornament">❀ ❀ ❀</div>
+				<p>You are cordially invited to attend our special event celebrating the grand opening of our new facility. The ceremony will be held on Saturday, the 15th of June at 7:00 PM at the Grand Ballroom.</p>
+				<p style="text-align: left; margin-top: 20px; font-size: 0.9em">To,</p>
+				<p style="position: absolute; bottom: 5mm; right: 15mm; font-size: 0.9em">Sincerely,<br />DMF Team</p>
+				<div style="position: absolute; bottom: 10mm; left: 15mm; font-size: 0.8em">{{name}}</div>
+				<div style="position: absolute; bottom: 5mm; left: 15mm; font-size: 0.8em">{{podobi}}</div>
+			</div>
+		</template>
+
+		<script>
+			// Guest data - customize here
+			const guestData = [
+				{ name: 'Mr. & Mrs. Johnson', podobi: 'Teacher' },
+				{ name: 'Mr. & Mrs. Smith', podobi: 'Engineer' },
+				{ name: 'Mr. & Mrs. Smith', podobi: 'Engineer' },
+				{ name: 'Mr. & Mrs. Smith', podobi: 'Engineer' },
+				{ name: 'Mr. & Mrs. Smith', podobi: 'Engineer' },
+			];
+
+			function generateInvitations() {
+				const template = document.getElementById('invitationTemplate').innerHTML;
+				const output = document.getElementById('output');
+				output.innerHTML = '';
+
+				let invitationsOnPage = 0;
+				let currentOutput = output;
+
+				guestData.forEach((guest, index) => {
+					if (invitationsOnPage === 3) {
+						const newPage = document.createElement('div');
+						newPage.className = 'a4-page';
+						document.body.appendChild(newPage);
+						currentOutput = newPage;
+						invitationsOnPage = 0;
+					}
+
+					let invitationHTML = template;
+					for (const [key, value] of Object.entries(guest)) {
+						const placeholder = new RegExp(`\\{\\{${key}\\}\\}`, 'g');
+						invitationHTML = invitationHTML.replace(placeholder, value);
+					}
+					currentOutput.innerHTML += invitationHTML;
+					invitationsOnPage++;
+				});
+			}
+
+			function regenerate() {
+				// Remove all existing pages except the first one
+				const pages = document.querySelectorAll('.a4-page');
+				for (let i = 1; i < pages.length; i++) {
+					pages[i].remove();
+				}
+				generateInvitations();
+			}
+
+			function downloadPDF() {
+				// Create a temporary container for PDF generation
+				const pdfContainer = document.getElementById('pdf-container');
+				pdfContainer.innerHTML = '';
+
+				// Clone all pages with their content
+				const pages = document.querySelectorAll('.a4-page');
+				pages.forEach((page) => {
+					const clone = page.cloneNode(true);
+					pdfContainer.appendChild(clone);
+				});
+
+				// Generate PDF options
+				const opt = {
+					margin: 0,
+					filename: 'invitations.pdf',
+					image: { type: 'jpeg', quality: 0.98 },
+					html2canvas: {
+						scale: 2,
+						logging: false,
+						useCORS: true,
+						allowTaint: true,
+					},
+					jsPDF: {
+						unit: 'mm',
+						format: 'a4',
+						orientation: 'portrait',
+						compress: true,
+					},
+					pagebreak: { mode: 'avoid-all' },
+				};
+
+				// Generate and save PDF
+				html2pdf()
+					.set(opt)
+					.from(pdfContainer)
+					.save()
+					.then(() => {
+						// Clean up after PDF generation
+						pdfContainer.innerHTML = '';
+					});
+			}
+
+			window.onload = generateInvitations;
+		</script>
+	</body>
+</html>

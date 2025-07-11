@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Invitation Card Generator</title>
+  <style>
+    body {
+      font-family: 'Georgia', serif;
+      background-color: #f9f5f0;
+      margin: 0;
+      padding: 20px;
+      color: #333;
+    }
+    .controls {
+      background: white;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      max-width: 210mm;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    button {
+      padding: 10px 15px;
+      background: #8c7b6b;
+      color: white;
+      border: none;
+      cursor: pointer;
+      margin-right: 10px;
+      font-family: 'Georgia', serif;
+    }
+    button:hover {
+      background: #6b5d4f;
+    }
+    .a4-page {
+      width: 210mm;
+      min-height: 297mm;
+      margin: 0 auto 20px;
+      padding: 15mm;
+      background: white;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      box-sizing: border-box;
+      position: relative;
+      page-break-after: always;
+    }
+    .invitation {
+      width: 180mm;
+      height: 85mm;
+      margin-bottom: 10mm;
+      padding: 15mm;
+      box-sizing: border-box;
+      position: relative;
+      border: 1px solid #e0d6c2;
+      background: #fffdfa;
+    }
+    .ornament {
+      color: #8c7b6b;
+      letter-spacing: 5px;
+      text-align: center;
+      margin: 10px 0;
+    }
+    /* .distributor-header {
+      text-align: center;
+      margin-bottom: 20mm;
+      padding: 10mm;
+      background: #f5f0e8;
+      border-bottom: 1px solid #e0d6c2;
+    } */
+    /* .distributor-name {
+      font-size: 1.5em;
+      color: #8c7b6b;
+      margin-bottom: 5px;
+    } */
+    .distributor-info {
+      font-size: 0.9em;
+      color: #666;
+    }
+    .page-number {
+      position: absolute;
+      bottom: 5mm;
+      right: 15mm;
+      font-size: 0.8em;
+      color: #555;
+    }
+    .map-list {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+    .map-list li {
+      margin-bottom: 5px;
+    }
+    .small-distributor-name {
+      position: absolute;
+      top: 5mm;
+      right: 15mm;
+      font-size: 0.8em;
+      color: #666;
+    }
+    @media print {
+      body { background-color: white; padding: 0; }
+      .no-print { display: none; }
+      .a4-page { box-shadow: none; margin: 0; padding: 10mm; }
+    }
+  </style>
+</head>
+<body>
+  <div class="controls no-print">
+    <h1 style="margin-top: 0; color: #8c7b6b">Invitation Card Generator</h1>
+    <p>Organized by distributor with 3 invitations per page</p>
+    <button onclick="window.print()">Print Invitations</button>
+    <button onclick="generateInvitations()">Regenerate</button>
+  </div>
+
+  <div id="output"></div>
+
+  <script>
+    const distributorData = [
+      {
+        name: "Mr. John Doe",
+        contact: "Phone: 123-456-7890",
+        guests: [
+          { name: "Mr. & Mrs. Johnson", designation: "Teacher" },
+          { name: "Mr. & Mrs. Smith", designation: "Engineer" },
+          { name: "Dr. Williams", designation: "Doctor" },
+          { name: "Ms. Anderson", designation: "Artist" }
+        ]
+      },
+      {
+        name: "Ms. Sarah Miller",
+        contact: "Phone: 987-654-3210",
+        guests: [
+          { name: "Mr. & Mrs. Brown", designation: "Business Owner" },
+          { name: "Prof. Davis", designation: "Professor" },
+          { name: "Ms. Green", designation: "Architect" },
+          { name: "Mr. Thomas", designation: "Lawyer" },
+          { name: "Mr. Thomas", designation: "Lawyer" },
+          { name: "Mr. Thomas", designation: "Lawyer" },
+          { name: "Mr. Thomas", designation: "Lawyer" },
+          { name: "Mr. Thomas", designation: "Lawyer" },
+          { name: "Mr. Thomas", designation: "Lawyer" },
+          { name: "Mr. Thomas", designation: "Lawyer" }
+        ]
+      }
+    ];
+
+    function createInvitationCard(guest) {
+      const card = document.createElement('div');
+      card.className = 'invitation';
+      card.innerHTML = `
+        <h2 style="text-align:center; margin-bottom:5px; color:#8c7b6b; font-weight:normal; font-size:1.4em">
+          INVITATION CARD
+        </h2>
+        <div class="ornament">❀ ❀ ❀</div>
+        <p>You are cordially invited to attend our special event celebrating the grand opening of our new facility. 
+        The ceremony will be held on Saturday, the 15th of June at 7:00 PM at the Grand Ballroom.</p>
+        <p style="text-align:left; margin-top:20px; font-size:0.9em">To,</p>
+        <div style="position:absolute; bottom:15mm; left:15mm; font-size:0.9em">${guest.name}</div>
+        <div style="position:absolute; bottom:10mm; left:15mm; font-size:0.8em">${guest.designation}</div>
+        <p style="position:absolute; bottom:5mm; right:15mm; font-size:0.9em">
+          Sincerely,<br/>Event Organizers
+        </p>
+      `;
+      return card;
+    }
+
+    function createDistributorHeader(distributor) {
+      const header = document.createElement('div');
+      header.className = 'distributor-header';
+      header.innerHTML = `
+        <pre>${distributor.name}${distributor.contact}</pre>
+      `;
+      return header;
+    }
+
+    function generateInvitations() {
+      const output = document.getElementById('output');
+      output.innerHTML = '';
+      let pageNumber = 1;
+
+      // first page with distributor map
+      const firstPage = document.createElement('div');
+      firstPage.className = 'a4-page';
+      const mapContent = document.createElement('div');
+      mapContent.innerHTML = `<h2 style="text-align:center; color:#8c7b6b">Distributor Map</h2><ul class="map-list"></ul>`;
+      const ul = mapContent.querySelector('.map-list');
+      distributorData.forEach((d, idx) => {
+        ul.innerHTML += `<li><strong>${d.name}</strong> - ${d.contact}</li>`;
+      });
+      firstPage.appendChild(mapContent);
+      const pageNumEl = document.createElement('div');
+      pageNumEl.className = 'page-number';
+      pageNumEl.textContent = `Page ${pageNumber++}`;
+      firstPage.appendChild(pageNumEl);
+      output.appendChild(firstPage);
+
+      distributorData.forEach(distributor => {
+        let page = document.createElement('div');
+        page.className = 'a4-page';
+        page.appendChild(createDistributorHeader(distributor));
+        let invitationsOnThisPage = 0;
+        let isFirstPageForDistributor = true;
+        output.appendChild(page);
+
+        distributor.guests.forEach((guest, index) => {
+          if (invitationsOnThisPage === 3) {
+            // Start a new page
+            page = document.createElement('div');
+            page.className = 'a4-page';
+
+            // small name on next pages
+            const smallName = document.createElement('div');
+            smallName.className = 'small-distributor-name';
+            smallName.textContent = distributor.name;
+            page.appendChild(smallName);
+
+            invitationsOnThisPage = 0;
+            isFirstPageForDistributor = false;
+            output.appendChild(page);
+          }
+
+          page.appendChild(createInvitationCard(guest));
+          invitationsOnThisPage++;
+        });
+      });
+
+      // finally add page numbers for all pages
+      const pages = output.querySelectorAll('.a4-page');
+      pages.forEach((p, index) => {
+        const pageNumberDiv = p.querySelector('.page-number');
+        if (!pageNumberDiv) {
+          const num = document.createElement('div');
+          num.className = 'page-number';
+          num.textContent = `Page ${pageNumber++}`;
+          p.appendChild(num);
+        }
+      });
+    }
+
+    window.onload = generateInvitations;
+  </script>
+</body>
+</html>
